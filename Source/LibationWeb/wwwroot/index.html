@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Libation</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">📚</span>
+        <span class="logo-text">Libation</span>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-view="library">Library</button>
+        <button class="nav-btn" data-view="import">Import</button>
+        <button class="nav-btn" data-view="settings">Settings</button>
+      </nav>
+      <div class="header-actions">
+        <span id="scan-status" class="scan-status hidden">Scanning...</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Library View -->
+    <section id="view-library" class="view active">
+      <div class="toolbar">
+        <input type="search" id="search-input" placeholder="Search library..." autocomplete="off" />
+        <div class="toolbar-right">
+          <select id="filter-status">
+            <option value="">All books</option>
+            <option value="NotLiberated">Not downloaded</option>
+            <option value="Liberated">Downloaded</option>
+            <option value="Error">Error</option>
+          </select>
+          <button id="btn-backup-all" class="btn btn-primary">Download All</button>
+        </div>
+      </div>
+
+      <div id="stats-bar" class="stats-bar"></div>
+
+      <div id="book-grid" class="book-grid">
+        <div class="loading">Loading library...</div>
+      </div>
+    </section>
+
+    <!-- Import View -->
+    <section id="view-import" class="view">
+      <div class="panel">
+        <h2>Import Library</h2>
+        <p>Scan your Audible accounts to import new books into your library.</p>
+
+        <div id="accounts-list" class="accounts-list">
+          <div class="loading">Loading accounts...</div>
+        </div>
+
+        <div class="import-actions">
+          <button id="btn-scan-all" class="btn btn-primary">Scan All Accounts</button>
+        </div>
+
+        <div id="import-log" class="import-log hidden"></div>
+      </div>
+    </section>
+
+    <!-- Settings View -->
+    <section id="view-settings" class="view">
+      <div class="panel">
+        <h2>Settings</h2>
+        <div id="settings-form" class="settings-form">
+          <div class="loading">Loading settings...</div>
+        </div>
+        <div class="settings-actions">
+          <button id="btn-save-settings" class="btn btn-primary">Save Settings</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Progress Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Book Detail Modal -->
+  <div id="book-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

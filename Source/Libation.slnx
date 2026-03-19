@@ -31,6 +31,9 @@
   <Folder Name="/6 Application/Libation CLI/">
     <Project Path="LibationCli/LibationCli.csproj" />
   </Folder>
+  <Folder Name="/6 Application/Libation Web/">
+    <Project Path="LibationWeb/LibationWeb.csproj" />
+  </Folder>
   <Folder Name="/6 Application/Libation UI/">
     <Project Path="LibationAvalonia/LibationAvalonia.csproj" />
     <Project Path="LibationUiBase/LibationUiBase.csproj" />
