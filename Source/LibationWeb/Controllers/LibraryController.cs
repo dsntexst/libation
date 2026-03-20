@@ -125,6 +125,53 @@ public class LibraryController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Export the full library as JSON in the same format as Libation's built-in
+    /// File → Export → Library as JSON. The resulting file can be loaded into
+    /// the standalone library.html viewer.
+    /// </summary>
+    [HttpGet("export")]
+    public IActionResult ExportLibrary()
+    {
+        var books = DbContexts.GetLibrary_Flat_NoTracking();
+        var dtos = books.Select(lb => new
+        {
+            account               = lb.Account,
+            dateAdded             = lb.DateAdded,
+            isAudiblePlus         = lb.IsAudiblePlus,
+            absentFromLastScan    = lb.AbsentFromLastScan,
+            audibleProductId      = lb.Book.AudibleProductId,
+            locale                = lb.Book.Locale,
+            title                 = lb.Book.Title,
+            subtitle              = lb.Book.Subtitle,
+            authorNames           = string.Join(", ", lb.Book.Authors.Select(a => a.Name)),
+            narratorNames         = string.Join(", ", lb.Book.Narrators.Select(n => n.Name)),
+            lengthInMinutes       = lb.Book.LengthInMinutes,
+            description           = lb.Book.Description,
+            publisher             = lb.Book.Publisher,
+            hasPdf                = lb.Book.Supplements.Any(),
+            seriesNames           = string.Join(", ", lb.Book.SeriesLink.Select(s => s.Series.Name).Where(n => n != null)),
+            seriesOrder           = string.Join(", ", lb.Book.SeriesLink.Select(s => $"{s.Order} : {s.Series.Name}")),
+            communityRatingOverall      = lb.Book.Rating?.OverallRating,
+            communityRatingPerformance  = lb.Book.Rating?.PerformanceRating,
+            communityRatingStory        = lb.Book.Rating?.StoryRating,
+            pictureId             = lb.Book.PictureId,
+            pictureLarge          = lb.Book.PictureLarge,
+            isAbridged            = lb.Book.IsAbridged,
+            datePublished         = lb.Book.DatePublished,
+            myLibationTags        = lb.Book.UserDefinedItem.Tags,
+            bookStatus            = lb.Book.UserDefinedItem.BookStatus.ToString(),
+            pdfStatus             = lb.Book.UserDefinedItem.PdfStatus?.ToString(),
+            contentType           = lb.Book.ContentType.ToString(),
+            language              = lb.Book.Language,
+            lastDownloaded        = lb.Book.UserDefinedItem.LastDownloaded,
+            isFinished            = lb.Book.UserDefinedItem.IsFinished,
+            includedUntil         = lb.IncludedUntil,
+        }).ToList();
+
+        return new JsonResult(dtos) { StatusCode = 200 };
+    }
+
     [HttpDelete("{productId}/permanent")]
     public async Task<IActionResult> PermanentlyDeleteBook(string productId)
     {
