@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Libation Library</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1a1a2e; --bg-card: #16213e; --bg-card-hover: #1e2d4a;
+  --accent: #e8a87c; --accent-dark: #c9855a;
+  --text: #e0e0e0; --text-muted: #8a8a9a; --border: #2a2a4a;
+  --success: #4caf50; --error: #f44336; --warning: #ff9800; --info: #64b5f6;
+  --radius: 8px; --shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ---- Header ---- */
+header { background: var(--bg-card); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;
+  height: 56px; display: flex; align-items: center; gap: 1.5rem; }
+.logo { display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem;
+  font-weight: 700; color: var(--accent); white-space: nowrap; }
+.search-wrap { flex: 1; max-width: 480px; }
+.search-wrap input { width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 0.45rem 1rem; border-radius: 20px; font-size: 0.88rem;
+  outline: none; transition: border-color 0.2s; }
+.search-wrap input:focus { border-color: var(--accent); }
+.header-actions { display: flex; gap: 0.5rem; margin-left: auto; align-items: center; }
+
+/* ---- Buttons ---- */
+.btn { padding: 0.45rem 1.1rem; border: none; border-radius: var(--radius);
+  font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.2s, opacity 0.2s; }
+.btn:active { opacity: 0.8; }
+.btn-primary { background: var(--accent); color: #1a1a2e; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+.btn-danger { background: rgba(244,67,54,0.15); color: var(--error); border: 1px solid rgba(244,67,54,0.3); }
+
+/* ---- Main ---- */
+main { flex: 1; max-width: 1400px; width: 100%; margin: 0 auto; padding: 1rem 1.5rem; }
+
+/* ---- Filters Bar ---- */
+.filters { display: flex; gap: 0.75rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+select { background: var(--bg-card); border: 1px solid var(--border); color: var(--text);
+  padding: 0.4rem 0.7rem; border-radius: var(--radius); font-size: 0.82rem; cursor: pointer; }
+.filter-count { font-size: 0.78rem; color: var(--text-muted); margin-left: auto; }
+
+/* ---- Stats ---- */
+.stats { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+  padding: 0.25rem 0.85rem; font-size: 0.78rem; color: var(--text-muted); }
+.stat strong { color: var(--text); }
+.stat.highlight { border-color: var(--accent); color: var(--accent); }
+
+/* ---- Grid ---- */
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.9rem; }
+.book-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  display: flex; flex-direction: column; }
+.book-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: rgba(232,168,124,0.5); }
+.book-cover { width: 100%; aspect-ratio: 1; background: #0d1527; display: flex;
+  align-items: center; justify-content: center; font-size: 3rem; overflow: hidden; position: relative; }
+.book-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.book-cover .no-cover { font-size: 2.5rem; }
+.book-badge { position: absolute; top: 6px; right: 6px; font-size: 0.65rem; font-weight: 700;
+  padding: 0.15rem 0.45rem; border-radius: 10px; }
+.badge-Liberated { background: rgba(76,175,80,0.85); color: #fff; }
+.badge-NotLiberated { background: rgba(255,152,0,0.85); color: #fff; }
+.badge-Error { background: rgba(244,67,54,0.85); color: #fff; }
+.badge-PartialDownload { background: rgba(100,181,246,0.85); color: #fff; }
+.book-info { padding: 0.65rem 0.75rem; flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+.book-title { font-size: 0.85rem; font-weight: 600; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.book-author { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-series { font-size: 0.72rem; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.book-meta { margin-top: auto; padding-top: 0.4rem; font-size: 0.7rem; color: var(--text-muted);
+  display: flex; justify-content: space-between; align-items: center; }
+.finished-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+
+/* ---- Empty / Loading ---- */
+.placeholder { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+.placeholder h2 { font-size: 1.4rem; margin-bottom: 1rem; color: var(--text); }
+.placeholder p { font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+.drop-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 3rem 2rem;
+  transition: border-color 0.2s, background 0.2s; }
+.drop-zone.drag-over { border-color: var(--accent); background: rgba(232,168,124,0.05); }
+
+/* ---- Modal ---- */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.hidden { display: none; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7); }
+.modal-header { display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem 0; }
+.modal-header h2 { font-size: 1rem; font-weight: 700; }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem;
+  cursor: pointer; line-height: 1; padding: 0; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 1.25rem 1.5rem 1.5rem; }
+.modal-book { display: flex; gap: 1.25rem; }
+.modal-cover { width: 130px; height: 130px; flex-shrink: 0; border-radius: 6px;
+  background: #0d1527; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+.modal-cover img { width: 100%; height: 100%; object-fit: cover; }
+.modal-details { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.modal-title { font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+.modal-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+.modal-author { font-size: 0.88rem; }
+.modal-narrator { font-size: 0.82rem; color: var(--text-muted); }
+.modal-series { font-size: 0.82rem; color: var(--accent); }
+.meta-row { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.meta-item { font-size: 0.78rem; color: var(--text-muted); }
+.meta-item strong { color: var(--text); }
+.status-pill { display: inline-block; font-size: 0.72rem; font-weight: 600;
+  padding: 0.15rem 0.5rem; border-radius: 10px; }
+.pill-Liberated { background: rgba(76,175,80,0.2); color: var(--success); }
+.pill-NotLiberated { background: rgba(255,152,0,0.2); color: var(--warning); }
+.pill-Error { background: rgba(244,67,54,0.2); color: var(--error); }
+.pill-PartialDownload { background: rgba(100,181,246,0.2); color: var(--info); }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+.field-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.3rem; display: block; }
+.tags-input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  padding: 0.45rem 0.75rem; border-radius: var(--radius); font-size: 0.85rem; outline: none; }
+.tags-input:focus { border-color: var(--accent); }
+.modal-footer { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+.rating-stars { font-size: 0.85rem; color: var(--accent); }
+
+/* ---- Toggle ---- */
+.toggle-row { display: flex; align-items: center; gap: 0.6rem; }
+.toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 20px;
+  cursor: pointer; transition: background 0.2s; }
+.toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px;
+  left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle input:checked + .toggle-track::before { transform: translateX(18px); }
+
+/* ---- Description ---- */
+.desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.55;
+  max-height: 100px; overflow-y: auto; margin-top: 0.5rem; }
+
+/* ---- Toast ---- */
+#toasts { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 300;
+  display: flex; flex-direction: column; gap: 0.4rem; pointer-events: none; }
+.toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.65rem 1rem; font-size: 0.82rem; max-width: 320px; pointer-events: auto;
+  animation: toastIn 0.25s ease; }
+.toast-success { border-left: 3px solid var(--success); }
+.toast-error { border-left: 3px solid var(--error); }
+.toast-info { border-left: 3px solid var(--info); }
+@keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .header-inner { gap: 0.75rem; flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; }
+  .book-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem; }
+  .modal-book { flex-direction: column; }
+  .modal-cover { width: 100%; height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">📚 Libation</div>
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="Search title, author, narrator, series, tags…" />
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" id="btn-import" title="Import library JSON from Libation export">Import JSON</button>
+      <button class="btn btn-ghost btn-sm" id="btn-export" title="Export library JSON">Export JSON</button>
+      <button class="btn btn-ghost btn-sm" id="btn-clear" title="Clear library from browser storage" style="display:none">Clear</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="filters" id="filters" style="display:none">
+    <select id="filter-status">
+      <option value="">All statuses</option>
+      <option value="Liberated">Downloaded</option>
+      <option value="NotLiberated">Not downloaded</option>
+      <option value="PartialDownload">Partial</option>
+      <option value="Error">Error</option>
+    </select>
+    <select id="filter-finished">
+      <option value="">Any</option>
+      <option value="finished">Finished</option>
+      <option value="unfinished">Not finished</option>
+    </select>
+    <select id="filter-series" style="max-width:200px">
+      <option value="">All series</option>
+    </select>
+    <select id="sort-by">
+      <option value="dateAdded-desc">Date Added ↓</option>
+      <option value="dateAdded-asc">Date Added ↑</option>
+      <option value="title-asc">Title A–Z</option>
+      <option value="title-desc">Title Z–A</option>
+      <option value="author-asc">Author A–Z</option>
+      <option value="length-desc">Longest first</option>
+      <option value="rating-desc">Rating ↓</option>
+    </select>
+    <span class="filter-count" id="filter-count"></span>
+  </div>
+
+  <div class="stats" id="stats-bar" style="display:none"></div>
+
+  <div id="content">
+    <div class="placeholder">
+      <div class="drop-zone" id="drop-zone">
+        <h2>📚 Libation Library Viewer</h2>
+        <p>Load your Libation library to browse and manage your audiobooks.<br>
+           Export your library from Libation using <strong>File → Export → Library as JSON</strong>,<br>
+           then import it here. Your edits are saved in the browser.</p>
+        <button class="btn btn-primary" id="btn-import-big">Import Library JSON</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Book Detail Modal -->
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-title-text">Book Details</h2>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="file-input" accept=".json" style="display:none" />
+
+<script>
+'use strict';
+
+// ============================================================
+// State
+// ============================================================
+const STORAGE_KEY = 'libation_library_v1';
+const EDITS_KEY   = 'libation_edits_v1';
+
+let library  = [];   // array of ExportDto objects (camelCase from Libation JSON export)
+let edits    = {};   // { [audibleProductId]: { myLibationTags, isFinished } }
+let filtered = [];
+
+// ============================================================
+// Cover image URL
+// ============================================================
+function coverUrl(book) {
+  if (book.pictureLarge) return book.pictureLarge;
+  if (book.pictureId)    return `https://m.media-amazon.com/images/I/${book.pictureId}.01._SL500_.jpg`;
+  return null;
+}
+
+// ============================================================
+// Persistence
+// ============================================================
+function saveLibrary() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(library)); } catch(e) { /* quota */ }
+}
+
+function saveEdits() {
+  try { localStorage.setItem(EDITS_KEY, JSON.stringify(edits)); } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) library = JSON.parse(raw);
+    const ed = localStorage.getItem(EDITS_KEY);
+    if (ed) edits = JSON.parse(ed);
+  } catch(e) { library = []; edits = {}; }
+}
+
+// Merge edits into a book object (returns a merged view, does not mutate library)
+function merged(book) {
+  const e = edits[book.audibleProductId];
+  if (!e) return book;
+  return Object.assign({}, book, e);
+}
+
+// ============================================================
+// Import / Export
+// ============================================================
+function importJson(text) {
+  let data;
+  try { data = JSON.parse(text); } catch(e) { toast('Invalid JSON file', 'error'); return; }
+  if (!Array.isArray(data) || data.length === 0) { toast('No library data found', 'error'); return; }
+  if (!data[0].audibleProductId && !data[0].AudibleProductId) {
+    toast('File does not appear to be a Libation library export', 'error'); return;
+  }
+  // Normalise keys to camelCase if exported from Libation with PascalCase
+  library = data.map(normalise);
+  edits = {};
+  saveLibrary();
+  saveEdits();
+  render();
+  toast(`Loaded ${library.length} books`, 'success');
+}
+
+function normalise(obj) {
+  // Libation JSON exports with camelCase via Newtonsoft.Json but handle PascalCase just in case
+  if (obj.AudibleProductId) {
+    const m = {};
+    for (const [k, v] of Object.entries(obj))
+      m[k.charAt(0).toLowerCase() + k.slice(1)] = v;
+    return m;
+  }
+  return obj;
+}
+
+function exportJson() {
+  if (!library.length) { toast('No library loaded', 'error'); return; }
+  // Merge all edits back into export
+  const out = library.map(b => {
+    const e = edits[b.audibleProductId];
+    return e ? Object.assign({}, b, e) : b;
+  });
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'libation-library.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Library exported', 'success');
+}
+
+// ============================================================
+// Filtering & Sorting
+// ============================================================
+function applyFilters() {
+  const q       = document.getElementById('search').value.trim().toLowerCase();
+  const status  = document.getElementById('filter-status').value;
+  const fin     = document.getElementById('filter-finished').value;
+  const series  = document.getElementById('filter-series').value;
+  const sortKey = document.getElementById('sort-by').value;
+
+  filtered = library
+    .map(merged)
+    .filter(b => {
+      if (b.contentType === 'Parent') return false;
+      if (status && b.bookStatus !== status) return false;
+      if (fin === 'finished'   && !b.isFinished) return false;
+      if (fin === 'unfinished' && b.isFinished)  return false;
+      if (series && b.seriesNames !== series) return false;
+      if (q) {
+        const hay = [b.title, b.subtitle, b.authorNames, b.narratorNames, b.seriesNames, b.myLibationTags]
+          .map(s => (s || '').toLowerCase()).join(' ');
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+  const [field, dir] = sortKey.split('-');
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (field === 'dateAdded')  { va = new Date(a.dateAdded);  vb = new Date(b.dateAdded); }
+    else if (field === 'title') { va = (a.title||'').toLowerCase(); vb = (b.title||'').toLowerCase(); }
+    else if (field === 'author'){ va = (a.authorNames||'').toLowerCase(); vb = (b.authorNames||'').toLowerCase(); }
+    else if (field === 'length'){ va = a.lengthInMinutes||0; vb = b.lengthInMinutes||0; }
+    else if (field === 'rating'){ va = a.communityRatingOverall||0; vb = b.communityRatingOverall||0; }
+    else                        { va = 0; vb = 0; }
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ?  1 : -1;
+    return 0;
+  });
+
+  document.getElementById('filter-count').textContent =
+    filtered.length === library.filter(b=>b.contentType!=='Parent').length
+      ? `${filtered.length} books`
+      : `${filtered.length} of ${library.filter(b=>b.contentType!=='Parent').length} books`;
+
+  renderGrid();
+}
+
+// ============================================================
+// Render
+// ============================================================
+function render() {
+  if (!library.length) return;
+
+  // Show/hide UI chrome
+  document.getElementById('filters').style.display = '';
+  document.getElementById('stats-bar').style.display = '';
+  document.getElementById('btn-clear').style.display = '';
+
+  renderStats();
+  populateSeriesFilter();
+  applyFilters();
+}
+
+function renderStats() {
+  const books = library.filter(b => b.contentType !== 'Parent').map(merged);
+  const total = books.length;
+  const down  = books.filter(b => b.bookStatus === 'Liberated').length;
+  const pend  = books.filter(b => b.bookStatus === 'NotLiberated').length;
+  const err   = books.filter(b => b.bookStatus === 'Error').length;
+  const fin   = books.filter(b => b.isFinished).length;
+
+  document.getElementById('stats-bar').innerHTML = `
+    <span class="stat"><strong>${total}</strong> books</span>
+    <span class="stat"><strong>${down}</strong> downloaded</span>
+    <span class="stat"><strong>${pend}</strong> pending</span>
+    ${err ? `<span class="stat"><strong>${err}</strong> errors</span>` : ''}
+    <span class="stat"><strong>${fin}</strong> finished</span>
+  `;
+}
+
+function populateSeriesFilter() {
+  const sel = document.getElementById('filter-series');
+  const current = sel.value;
+  const series = [...new Set(library.map(b => b.seriesNames).filter(s => s && s.trim()))].sort();
+  sel.innerHTML = '<option value="">All series</option>' +
+    series.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if (current) sel.value = current;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('content');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="placeholder"><p>No books match your filters.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = `<div class="book-grid">${filtered.map(renderCard).join('')}</div>`;
+
+  grid.querySelectorAll('.book-card').forEach(card => {
+    card.addEventListener('click', () => openModal(card.dataset.id));
+  });
+}
+
+function renderCard(book) {
+  const img = coverUrl(book);
+  const coverHtml = img
+    ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="no-cover" style="display:none">📚</span>`
+    : `<span class="no-cover">📚</span>`;
+
+  const statusLabel = { Liberated: '✓', NotLiberated: '↓', Error: '✗', PartialDownload: '…' }[book.bookStatus] || '';
+  const dur = fmtDur(book.lengthInMinutes);
+
+  return `<div class="book-card" data-id="${esc(book.audibleProductId)}">
+    <div class="book-cover">
+      ${coverHtml}
+      <span class="book-badge badge-${esc(book.bookStatus)}">${statusLabel}</span>
+    </div>
+    <div class="book-info">
+      <div class="book-title">${esc(book.title)}${book.subtitle ? ': ' + esc(book.subtitle) : ''}</div>
+      <div class="book-author">${esc(book.authorNames || '')}</div>
+      ${book.seriesNames ? `<div class="book-series">${esc(book.seriesNames)}</div>` : ''}
+      <div class="book-meta">
+        <span>${esc(dur)}</span>
+        ${book.isFinished ? '<span class="finished-dot" title="Finished"></span>' : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// Modal
+// ============================================================
+function openModal(id) {
+  const book = library.map(merged).find(b => b.audibleProductId === id);
+  if (!book) return;
+
+  const img = coverUrl(book);
+  const coverHtml = img
+    ? `<img src="${esc(img)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='📚'" />`
+    : '📚';
+
+  const stars = n => n ? '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n)) : 'N/A';
+  const dur = fmtDur(book.lengthInMinutes);
+  const pub = book.datePublished ? new Date(book.datePublished).getFullYear() : '';
+
+  document.getElementById('modal-title-text').textContent = book.title || 'Book Details';
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-book">
+      <div class="modal-cover">${coverHtml}</div>
+      <div class="modal-details">
+        <div class="modal-title">${esc(book.title || '')}</div>
+        ${book.subtitle ? `<div class="modal-subtitle">${esc(book.subtitle)}</div>` : ''}
+        <div class="modal-author">by ${esc(book.authorNames || 'Unknown')}</div>
+        ${book.narratorNames ? `<div class="modal-narrator">Narrated by ${esc(book.narratorNames)}</div>` : ''}
+        ${book.seriesNames ? `<div class="modal-series">${esc(book.seriesNames)}${book.seriesOrder ? ' · ' + esc(book.seriesOrder) : ''}</div>` : ''}
+        <div class="meta-row">
+          ${dur ? `<div class="meta-item"><strong>${dur}</strong></div>` : ''}
+          ${pub  ? `<div class="meta-item"><strong>${pub}</strong></div>` : ''}
+          ${book.isAbridged ? `<div class="meta-item">Abridged</div>` : ''}
+          ${book.language ? `<div class="meta-item">${esc(book.language)}</div>` : ''}
+        </div>
+        <div class="meta-row" style="margin-top:0.35rem">
+          <div class="meta-item">Status: <span class="status-pill pill-${esc(book.bookStatus)}">${esc(book.bookStatus || '')}</span></div>
+          ${book.communityRatingOverall ? `<div class="meta-item rating-stars" title="Community rating">${stars(book.communityRatingOverall)} ${book.communityRatingOverall.toFixed(1)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    ${book.description ? `<div class="desc" style="margin-top:0.75rem">${esc(book.description)}</div>` : ''}
+
+    <hr class="divider" />
+
+    <label class="field-label" for="modal-tags">My Tags</label>
+    <input class="tags-input" id="modal-tags" type="text"
+      value="${esc(book.myLibationTags || '')}" placeholder="tag1, tag2…" />
+
+    <div class="toggle-row" style="margin-top:0.85rem">
+      <label class="toggle">
+        <input type="checkbox" id="modal-finished" ${book.isFinished ? 'checked' : ''} />
+        <span class="toggle-track"></span>
+      </label>
+      <span style="font-size:0.85rem">Mark as finished</span>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-sm" id="modal-save">Save Changes</button>
+      <button class="btn btn-ghost btn-sm" id="modal-cancel">Cancel</button>
+      ${book.audibleProductId ? `<a class="btn btn-ghost btn-sm"
+        href="https://www.audible.com/pd/${esc(book.audibleProductId)}"
+        target="_blank" rel="noopener" style="text-decoration:none">Open on Audible ↗</a>` : ''}
+    </div>
+
+    ${book.publisher || book.categoriesNames ? `
+    <div class="meta-row" style="margin-top:1rem">
+      ${book.publisher ? `<div class="meta-item"><strong>Publisher:</strong> ${esc(book.publisher)}</div>` : ''}
+      ${book.categoriesNames ? `<div class="meta-item"><strong>Category:</strong> ${esc(book.categoriesNames)}</div>` : ''}
+      ${book.account ? `<div class="meta-item"><strong>Account:</strong> ${esc(book.account)}</div>` : ''}
+    </div>` : ''}
+  `;
+
+  document.getElementById('modal').classList.remove('hidden');
+
+  document.getElementById('modal-save').addEventListener('click', () => {
+    const tags     = document.getElementById('modal-tags').value;
+    const finished = document.getElementById('modal-finished').checked;
+    edits[id] = Object.assign(edits[id] || {}, { myLibationTags: tags, isFinished: finished });
+    saveEdits();
+    renderStats();
+    renderGrid();
+    document.getElementById('modal').classList.add('hidden');
+    toast('Saved', 'success');
+  });
+
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// ============================================================
+// Utilities
+// ============================================================
+function fmtDur(mins) {
+  if (!mins) return '';
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h > 0 ? `${h}h${m > 0 ? ' ' + m + 'm' : ''}` : `${m}m`;
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ============================================================
+// Event Wiring
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Load persisted data
+  loadFromStorage();
+  if (library.length) render();
+
+  // File import via button
+  const fileInput = document.getElementById('file-input');
+  function triggerImport() { fileInput.click(); }
+  document.getElementById('btn-import').addEventListener('click', triggerImport);
+  document.getElementById('btn-import-big').addEventListener('click', triggerImport);
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    fileInput.value = '';
+    const reader = new FileReader();
+    reader.onload = e => importJson(e.target.result);
+    reader.readAsText(file);
+  });
+
+  // Export
+  document.getElementById('btn-export').addEventListener('click', exportJson);
+
+  // Clear
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    if (!confirm('Remove library from browser storage?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(EDITS_KEY);
+    library = []; edits = {};
+    document.getElementById('filters').style.display = 'none';
+    document.getElementById('stats-bar').style.display = 'none';
+    document.getElementById('btn-clear').style.display = 'none';
+    document.getElementById('content').innerHTML = `
+      <div class="placeholder">
+        <div class="drop-zone" id="drop-zone">
+          <h2>📚 Libation Library Viewer</h2>
+          <p>Load your Libation library to browse and manage your audiobooks.<br>
+             Export from Libation using <strong>File → Export → Library as JSON</strong>,<br>
+             then import it here.</p>
+          <button class="btn btn-primary" id="btn-import-big">Import Library JSON</button>
+        </div>
+      </div>`;
+    document.getElementById('btn-import-big').addEventListener('click', triggerImport);
+    reWireDropZone();
+  });
+
+  // Search & filters → debounced apply
+  let t;
+  document.getElementById('search').addEventListener('input', () => { clearTimeout(t); t = setTimeout(applyFilters, 200); });
+  ['filter-status','filter-finished','filter-series','sort-by'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', applyFilters);
+  });
+
+  // Modal close
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // Drag & drop
+  reWireDropZone();
+
+  function reWireDropZone() {
+    const body = document.body;
+    body.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-zone')?.classList.add('drag-over'); });
+    body.addEventListener('dragleave', () => document.getElementById('drop-zone')?.classList.remove('drag-over'));
+    body.addEventListener('drop', e => {
+      e.preventDefault();
+      document.getElementById('drop-zone')?.classList.remove('drag-over');
+      const file = e.dataTransfer?.files[0];
+      if (!file || !file.name.endsWith('.json')) { toast('Please drop a .json file', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = ev => importJson(ev.target.result);
+      reader.readAsText(file);
+    });
+  }
+});
+</script>
+</body>
+</html>
